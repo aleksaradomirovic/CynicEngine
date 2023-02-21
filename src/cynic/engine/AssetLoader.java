@@ -1,9 +1,10 @@
 package cynic.engine;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,8 +13,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public class AssetLoader {
-	public static Entry parseFile(File f) throws IOException {
-		AwareReader reader = new AwareReader(f);
+	public static Entry parseFile(Path f) throws IOException {
+		AwareReader reader = new AwareReader(f.toString(), f.toUri().toURL().openStream());
 		Entry e = new Entry(null, reader);
 		reader.close();
 		return e;
@@ -44,6 +45,9 @@ public class AssetLoader {
 				int c, mode = 0;
 				while(mode >= 0) {
 					c = in.read();
+					
+					if(c == '#') while(c != '\n' && c >= 0)
+						c = in.read(); // comments
 					
 					switch(mode) {
 						case 1: // hit a separator
@@ -84,8 +88,8 @@ public class AssetLoader {
 									
 									try {
 										val = Double.parseDouble(out);
-										val = Long.parseLong(out);
-										val = Integer.parseInt(out);
+//										val = Long.parseLong(out);
+//										val = Integer.parseInt(out);
 									} catch(NumberFormatException e) {}
 									
 									if(val == out) {
@@ -243,13 +247,13 @@ public class AssetLoader {
 	
 	public static class AwareReader extends Reader {
 		private final Reader in;
-		private final File file;
+		private final String file;
 		
 		private int pos;
 		
-		public AwareReader(File f) throws IOException {
-			this.file = f;
-			this.in = new FileReader(f);
+		public AwareReader(String file, InputStream is) throws IOException {
+			this.file = file;
+			this.in = new InputStreamReader(is);
 		}
 		
 		@Override
@@ -273,7 +277,7 @@ public class AssetLoader {
 		
 		@Override
 		public String toString() {
-			return file.getName()+": "+pos;
+			return file+": "+pos;
 		}
 	}
 }
